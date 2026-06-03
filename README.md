@@ -1,5 +1,7 @@
 # 🕵️ The Investment Detective — 4 Lenses Lab
 
+### ▶ **[Open the live app →](https://aditya-00a.github.io/investment-detective/)**
+
 An interactive, **offline** web app that turns the *Investment Philosophies Workbook* (Excel) into a
 hands-on teaching tool for high-school finance students.
 
