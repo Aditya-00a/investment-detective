@@ -16,6 +16,12 @@ const num = v => (v==null || v==="" || isNaN(+v)) ? null : +v;
 const fmtNum = (v,d=1) => v==null ? "—" : (+v).toLocaleString(undefined,{maximumFractionDigits:d});
 const money = v => v==null ? "—" : "$"+(+v).toLocaleString(undefined,{maximumFractionDigits:2});
 const pctTxt = v => v==null ? "—" : Math.round(v*100)+"%";
+function fmtTime(iso){ try{ const d=new Date(iso); return d.toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}); }catch(e){ return ""; } }
+
+/* Site-wide default proxy URL for live data. Leave "" to require per-device setup.
+   Once you deploy worker.js, paste its URL here (or send it to me) so live data
+   works for everyone on detective.asion.ai with nothing to configure. */
+const DEFAULT_PROXY = "";
 
 /* ---------- state -------------------------------------------------------- */
 const BLANK = () => ({
@@ -23,6 +29,7 @@ const BLANK = () => ({
   fin:{}, scores:{buffett:{},thiel:{},steinhardt:{},wood:{}}, ev:{buffett:{},thiel:{},steinhardt:{},wood:{}},
   dcf:{ fcf0:10, g:12, gTerm:3, wacc:9, netDebt:0, shares:1000, price:100 },
   decision:{ buyReason:"", risk:"", evidence:"", change:"", variant:"", pitch:"" },
+  asOf:"", liveSource:"",
 });
 let S = BLANK();
 let view = "home";
@@ -139,6 +146,10 @@ function viewHome(){
         <input id="home-search" placeholder="Company or ticker — e.g. NVDA, Tesla, Costco…" autocomplete="off">
         <button class="btn" data-startsearch>Analyze →</button>
       </div>
+      <div class="small dim" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span>${LIVE.getProxy()?"📡 Live data is ON — numbers auto-fill from Yahoo.":"📡 Live data: pull real prices & ratios (no API key)."}</span>
+        <button class="btn ghost sm" data-livesettings>⚙ ${LIVE.getProxy()?"Live settings":"Turn on live data"}</button>
+      </div>
       <div>
         <div class="small dim" style="margin-bottom:6px">Quick picks (pre-loaded with rough numbers):</div>
         <div class="chips">
@@ -185,10 +196,13 @@ function viewAnalyze(){
       <div>
         <div class="tick">📈 ${esc(S.ticker)}</div>
         <div class="sector">${esc(S.name||"")}${S.sector?" · "+esc(S.sector):""}</div>
+        ${S.asOf?`<div class="live-badge">🟢 Live · ${esc(S.liveSource||"Yahoo Finance")} · as of ${esc(fmtTime(S.asOf))}</div>`:""}
       </div>
       <div style="margin-left:auto" class="row no-print">
-        <input id="f-group" placeholder="Group / your names" value="${esc(S.group)}" style="width:170px">
-        <button class="btn ghost sm" data-print>🖨 Save as PDF</button>
+        <button class="btn sm" id="btn-fetchlive" data-fetchlive>🔄 Fetch live</button>
+        <button class="btn ghost sm" data-livesettings title="Live-data settings">⚙</button>
+        <input id="f-group" placeholder="Group / your names" value="${esc(S.group)}" style="width:150px">
+        <button class="btn ghost sm" data-print>🖨 PDF</button>
         <button class="btn ghost sm" data-reset>↺ Reset</button>
       </div>
     </div>
@@ -646,6 +660,7 @@ function startCompany(ticker, name, sector, fin, dcf){
     if(dcf) S.dcf={...S.dcf,...dcf};
   }
   activeLens="buffett"; saveCurrent(); go("analyze");
+  if(!existing && LIVE.getProxy()) fetchLiveFor(t, {silent:true});
 }
 function pickFromLibrary(ticker){
   const c=COMPANIES.find(x=>x.ticker===ticker);
@@ -756,6 +771,75 @@ document.addEventListener("keydown", e=>{
   if(e.key==="Enter" && e.target.id==="home-search"){ handleSearch(e.target.value); }
 });
 
+/* ===========================================================================
+   LIVE DATA (Yahoo via proxy — see live.js / worker.js)
+   ========================================================================= */
+function applyLive(d){
+  if(!d) return;
+  if(d.name) S.name=d.name;
+  if(d.sector) S.sector=d.sector;
+  if(d.fin) for(const k in d.fin){ const v=d.fin[k]; if(v!=null && !isNaN(v)) S.fin[k]=v; }
+  if(d.dcf) ["price","shares","fcf0","netDebt"].forEach(k=>{ if(d.dcf[k]!=null && !isNaN(d.dcf[k])) S.dcf[k]=d.dcf[k]; });
+  if(d.price!=null && !isNaN(d.price)) S.dcf.price=d.price;
+  S.asOf = d.asOf || new Date().toISOString();
+  S.liveSource = d.source || "Yahoo Finance";
+  saveCurrent();
+  if(["analyze","valuation","compare"].includes(view)) render();
+}
+async function fetchLiveFor(ticker, opts){
+  opts=opts||{};
+  if(!ticker) return;
+  if(!LIVE.getProxy()){ if(!opts.silent) openLiveSettings("First, turn on live data (2-min setup — no API key)."); return; }
+  const btn=$("#btn-fetchlive"); if(btn){ btn.disabled=true; btn.textContent="⏳ Fetching…"; }
+  try{
+    const d=await LIVE.fetchLive(ticker);
+    applyLive(d);
+    toast("📡 Live data loaded for "+ticker);
+  }catch(e){
+    if(String(e.message)==="NO_PROXY"){ if(!opts.silent) openLiveSettings("Turn on live data to auto-fill the numbers."); }
+    else toast("Live fetch failed: "+(e.message||e));
+  }finally{ const b=$("#btn-fetchlive"); if(b){ b.disabled=false; b.textContent="🔄 Fetch live"; } }
+}
+function openLiveSettings(msg){
+  const old=$("#live-pop"); if(old) old.remove();
+  const p=document.createElement("div"); p.id="live-pop"; p.className="live-pop";
+  p.innerHTML=`<div class="live-pop-card">
+    <button class="live-x" data-closelive title="Close">✕</button>
+    <h3>📡 Live data</h3>
+    <p class="small dim">Pulls live price &amp; ratios from <b>Yahoo Finance — no API key.</b> Paste your proxy URL (the Cloudflare Worker from <span class="mono">LIVE_DATA_SETUP.md</span>). It's stored only in this browser.</p>
+    ${msg?`<div class="live-msg">${esc(msg)}</div>`:""}
+    <input id="live-url" placeholder="https://your-worker.workers.dev" value="${esc(LIVE.getProxy())}">
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn sm" data-saveproxy>Save</button>
+      <button class="btn ghost sm" data-testproxy>Test (AAPL)</button>
+      <button class="btn ghost sm" data-closelive>Close</button>
+    </div>
+    <div id="live-test" class="small" style="margin-top:8px"></div>
+    <div class="small dim" style="margin-top:8px">No proxy yet? See <span class="mono">LIVE_DATA_SETUP.md</span> — it takes ~2 minutes and needs no key.</div>
+  </div>`;
+  document.body.appendChild(p);
+  const inp=$("#live-url"); if(inp) inp.focus();
+}
+async function testProxy(){
+  const url=($("#live-url").value||"").trim(); const out=$("#live-test");
+  if(!url){ out.textContent="Enter your proxy URL first."; out.className="small v-weak"; return; }
+  LIVE.setProxy(url); out.textContent="Testing…"; out.className="small dim";
+  try{ const d=await LIVE.fetchLive("AAPL");
+    out.innerHTML="✅ Works! AAPL "+(d.price!=null?("$"+d.price):"")+" · P/E "+(d.fin&&d.fin.pe!=null?d.fin.pe:"?")+" · ROE "+(d.fin&&d.fin.roe!=null?d.fin.roe+"%":"?");
+    out.className="small v-strong"; }
+  catch(e){ out.innerHTML="❌ "+esc(e.message||e); out.className="small v-weak"; }
+}
+document.addEventListener("click", e=>{
+  const t=e.target.closest("[data-fetchlive],[data-livesettings],[data-saveproxy],[data-testproxy],[data-closelive]");
+  if(!t) return;
+  if(t.hasAttribute("data-livesettings")){ openLiveSettings(); return; }
+  if(t.hasAttribute("data-fetchlive")){ fetchLiveFor(S.ticker); return; }
+  if(t.hasAttribute("data-testproxy")){ testProxy(); return; }
+  if(t.hasAttribute("data-saveproxy")){ LIVE.setProxy($("#live-url").value); const p=$("#live-pop"); if(p)p.remove(); toast("Saved — live data is on"); if(S.ticker) fetchLiveFor(S.ticker); else render(); return; }
+  if(t.hasAttribute("data-closelive")){ const p=$("#live-pop"); if(p)p.remove(); return; }
+});
+
 /* ---------- boot --------------------------------------------------------- */
+if(DEFAULT_PROXY && !LIVE.getProxy()) LIVE.setProxy(DEFAULT_PROXY);
 render();
 })();

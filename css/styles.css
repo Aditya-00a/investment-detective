@@ -279,7 +279,24 @@ table.rubric td.s2{color:#86efac} table.rubric td.s1{color:#fde68a} table.rubric
 /* ---- disclaimer / footer ------------------------------------------------ */
 .disclaimer{font-size:11.5px;color:var(--ink-dim);border:1px dashed var(--line);border-radius:10px;padding:11px 14px;margin-top:18px}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--accent2);color:#fff;
-  padding:11px 18px;border-radius:10px;font-weight:700;box-shadow:var(--shadow);z-index:50;animation:fade .2s}
+  padding:11px 18px;border-radius:10px;font-weight:700;box-shadow:var(--shadow);z-index:60;animation:fade .2s}
+
+/* live-data badge + settings popover */
+.live-badge{display:inline-block;margin-top:6px;font-size:11.5px;font-weight:700;color:#86efac;
+  background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.4);border-radius:7px;padding:2px 9px}
+.live-pop{position:fixed;inset:0;background:rgba(5,9,18,.62);backdrop-filter:blur(3px);z-index:70;
+  display:grid;place-items:center;animation:fade .15s;padding:18px}
+.live-pop-card{position:relative;width:min(440px,94vw);background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:14px;padding:20px 20px 18px;box-shadow:var(--shadow)}
+.live-pop-card h3{font-size:18px;margin-bottom:8px}
+.live-pop-card input{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--ink);
+  padding:10px 12px;border-radius:9px;font-size:13.5px;outline:none;margin-top:6px}
+.live-pop-card input:focus{border-color:var(--accent)}
+.live-x{position:absolute;top:12px;right:12px;background:transparent;border:0;color:var(--ink-dim);
+  font-size:16px;cursor:pointer;font-weight:700}
+.live-x:hover{color:var(--pass)}
+.live-msg{background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.4);color:#bae6fd;
+  border-radius:8px;padding:8px 11px;font-size:12.5px;margin-bottom:10px}
 
 /* ---- responsive --------------------------------------------------------- */
 @media (max-width:980px){

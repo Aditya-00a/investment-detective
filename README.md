@@ -24,6 +24,17 @@ or upload the folder to any free static host (GitHub Pages, Netlify drop, your L
 
 ---
 
+## 📡 Live data (optional, no API key)
+
+Out of the box the app uses rounded teaching figures. Flip on **live price + ratios from Yahoo Finance**
+(no API key, no signup) by deploying one tiny free proxy — see **[`LIVE_DATA_SETUP.md`](LIVE_DATA_SETUP.md)**
+(~2 minutes). Then click **🔄 Fetch live** on any company (or it auto-fills when you pick a stock), and a
+**"🟢 Live · as of …"** badge appears. Live numbers flow straight into the four scorecards *and* the DCF
+(price, shares, free cash flow). If the proxy is unreachable, the app quietly falls back to the teaching
+figures. Files involved: [`worker.js`](worker.js) (the proxy) and [`js/live.js`](js/live.js) (the client).
+
+---
+
 ## 🧭 What's inside (mirrors the Excel, tab-for-tab)
 
 | App tab | Mirrors in the workbook | What students do |
