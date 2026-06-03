@@ -354,7 +354,7 @@ const COMPANIES = [
   { ticker:"JPM",  name:"JPMorgan Chase", sector:"Financials / Banking",
     fin:{ pe:12, pb:1.8, revGrowth:8, grossMargin:85, opMargin:40, roe:16, de:1.2, mktCap:600 },
     dcf:{ fcf0:40, g:6, gTerm:3, wacc:9, netDebt:0, shares:2850, price:210 } },
-  { ticker:"BRK.B", name:"Berkshire Hathaway", sector:"Financials / Conglomerate",
+  { ticker:"BRK-B", name:"Berkshire Hathaway", sector:"Financials / Conglomerate",
     fin:{ pe:22, pb:1.6, revGrowth:8, grossMargin:30, opMargin:18, roe:9, de:0.2, mktCap:950 },
     dcf:{ fcf0:30, g:8, gTerm:3, wacc:8, netDebt:-160, shares:2160, price:440 } },
   { ticker:"AXP",  name:"American Express", sector:"Financials / Payments",
