@@ -18,12 +18,6 @@ const money = v => v==null ? "—" : "$"+(+v).toLocaleString(undefined,{maximumF
 const pctTxt = v => v==null ? "—" : Math.round(v*100)+"%";
 function fmtTime(iso){ try{ const d=new Date(iso); return d.toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}); }catch(e){ return ""; } }
 
-/* Site-wide default proxy URL for live data. Leave "" to require per-device setup.
-   Once you deploy worker.js, paste its URL here (or send it to me) so live data
-   works for everyone on detective.asion.ai with nothing to configure.
-   "/api/quote" = the same-origin Vercel function in api/quote.js (auto-deploys). */
-const DEFAULT_PROXY = "/api/quote";
-
 /* ---------- state -------------------------------------------------------- */
 const BLANK = () => ({
   ticker:"", name:"", sector:"", group:"",
@@ -661,7 +655,7 @@ function startCompany(ticker, name, sector, fin, dcf){
     if(dcf) S.dcf={...S.dcf,...dcf};
   }
   activeLens="buffett"; saveCurrent(); go("analyze");
-  if(!existing && LIVE.getProxy()) fetchLiveFor(t, {silent:true});
+  fetchLiveFor(t, {silent:true});   // auto-fill live data; silent fallback if unavailable
 }
 function pickFromLibrary(ticker){
   const c=COMPANIES.find(x=>x.ticker===ticker);
@@ -841,6 +835,5 @@ document.addEventListener("click", e=>{
 });
 
 /* ---------- boot --------------------------------------------------------- */
-if(DEFAULT_PROXY && !LIVE.getProxy()) LIVE.setProxy(DEFAULT_PROXY);
 render();
 })();

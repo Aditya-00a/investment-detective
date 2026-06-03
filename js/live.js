@@ -7,8 +7,12 @@
 window.LIVE = (function () {
   "use strict";
   const LS_KEY = "invdet:proxy";
+  // Same-origin Vercel function (api/quote.js). Live data is ON by default:
+  // getProxy() is NEVER empty, so the app auto-fetches with zero setup.
+  // Override per-device via the ⚙ box (e.g. a Cloudflare Worker URL).
+  const DEFAULT_PROXY = "/api/quote";
 
-  function getProxy() { try { return localStorage.getItem(LS_KEY) || ""; } catch (e) { return ""; } }
+  function getProxy() { try { return (localStorage.getItem(LS_KEY) || "").trim() || DEFAULT_PROXY; } catch (e) { return DEFAULT_PROXY; } }
   function setProxy(u) { try { localStorage.setItem(LS_KEY, (u || "").trim()); } catch (e) {} }
 
   // If a proxy returns RAW Yahoo quoteSummary JSON instead of our normalized
