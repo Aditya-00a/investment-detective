@@ -9,7 +9,20 @@ That proxy is `worker.js` (a Cloudflare Worker). Deploy it once and you're done 
 
 ---
 
-## Deploy the Worker (copy-paste, no install)
+## ✅ On Vercel (detective.asion.ai)? It's already done.
+
+This repo ships **`api/quote.js`** — a Vercel serverless function that runs *same-origin* at
+**`/api/quote`**. Vercel auto-detects anything in `/api`, so it deploys automatically on every push.
+The app already points to it by default (`DEFAULT_PROXY = "/api/quote"` in `js/app.js`).
+
+**You don't have to do anything** — live data is on for everyone the moment Vercel finishes building.
+Verify after a deploy: open `https://detective.asion.ai/api/quote?ticker=AAPL` → you'll see live JSON.
+
+The rest of this file (the Cloudflare Worker) is only for hosting the app *somewhere other than Vercel*.
+
+---
+
+## Alternative: deploy the Cloudflare Worker (copy-paste, no install)
 
 1. Go to **https://dash.cloudflare.com** → sign up / log in (free).
 2. Left sidebar → **Workers & Pages** → **Create** → **Create Worker**.

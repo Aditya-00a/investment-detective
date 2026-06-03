@@ -20,8 +20,9 @@ function fmtTime(iso){ try{ const d=new Date(iso); return d.toLocaleString(undef
 
 /* Site-wide default proxy URL for live data. Leave "" to require per-device setup.
    Once you deploy worker.js, paste its URL here (or send it to me) so live data
-   works for everyone on detective.asion.ai with nothing to configure. */
-const DEFAULT_PROXY = "";
+   works for everyone on detective.asion.ai with nothing to configure.
+   "/api/quote" = the same-origin Vercel function in api/quote.js (auto-deploys). */
+const DEFAULT_PROXY = "/api/quote";
 
 /* ---------- state -------------------------------------------------------- */
 const BLANK = () => ({
@@ -797,7 +798,7 @@ async function fetchLiveFor(ticker, opts){
     toast("📡 Live data loaded for "+ticker);
   }catch(e){
     if(String(e.message)==="NO_PROXY"){ if(!opts.silent) openLiveSettings("Turn on live data to auto-fill the numbers."); }
-    else toast("Live fetch failed: "+(e.message||e));
+    else if(!opts.silent) toast("Live fetch failed: "+(e.message||e));
   }finally{ const b=$("#btn-fetchlive"); if(b){ b.disabled=false; b.textContent="🔄 Fetch live"; } }
 }
 function openLiveSettings(msg){
